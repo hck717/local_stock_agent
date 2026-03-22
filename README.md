@@ -9,7 +9,7 @@ Local-first stock/ETF/crypto analysis agent with multi-provider LLM support, dyn
 ![WhatsApp Image 2026-03-22 at 20 09 04](https://github.com/user-attachments/assets/fd063181-e1ff-4114-96df-ee5cc81f1e54)
 - Our outputs:
 ![WhatsApp Image 2026-03-22 at 20 13 49](https://github.com/user-attachments/assets/a35c1db4-0f99-4577-8144-0b9a70d6b649)
-![WhatsApp Image 2026-03-22 at 20 14 53](https://github.com/user-attachments/assets/4b125779-da50-4502-a14c-6de2e2b9f922)
+
 
 
 
