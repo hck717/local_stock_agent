@@ -826,10 +826,25 @@ Provide a clear, concise answer that:
             answer += f"- P/E Ratio (TTM): {data['trailingPE']:.2f}\n"
         if data.get("forwardPE"):
             answer += f"- P/E Ratio (Forward): {data['forwardPE']:.2f}\n"
+        if data.get("priceToBook"):
+            answer += f"- Price/Book: {data['priceToBook']:.2f}\n"
+        if data.get("priceToSalesTrailing12Months"):
+            answer += f"- Price/Sales (TTM): {data['priceToSalesTrailing12Months']:.2f}\n"
         if data.get("dividendYield"):
-            answer += f"- Dividend Yield: {data['dividendYield']*100:.2f}%\n"
+            dy = data['dividendYield']
+            if 0 < dy <= 1:
+                dy = dy * 100
+            answer += f"- Dividend Yield: {dy:.2f}%\n"
         if data.get("beta"):
             answer += f"- Beta: {data['beta']:.2f}\n"
+        if data.get("totalRevenue"):
+            answer += f"- Revenue (latest): ${data['totalRevenue']/1e9:.2f}B\n"
+        if data.get("netIncome"):
+            answer += f"- Net Income (latest): ${data['netIncome']/1e9:.2f}B\n"
+        if data.get("operatingCashFlow"):
+            answer += f"- Operating Cash Flow (latest): ${data['operatingCashFlow']/1e9:.2f}B\n"
+        if data.get("freeCashFlow"):
+            answer += f"- Free Cash Flow (latest): ${data['freeCashFlow']/1e9:.2f}B\n"
         
         llm_analysis = self.generate_analysis(
             question=question or f"Company fundamentals for {ticker}",

@@ -351,10 +351,65 @@ def get_company_info(ticker: str) -> dict:
                 "marketCap", "currentPrice", "previousClose",
                 "fiftyTwoWeekHigh", "fiftyTwoWeekLow",
                 "trailingPE", "forwardPE", "dividendYield",
-                "volume", "averageVolume", "beta", "epsTrailingTwMonths"
+                "volume", "averageVolume", "beta", "epsTrailingTwMonths",
+                "enterpriseValue", "priceToBook", "priceToSalesTrailing12Months",
+                "returnOnEquity", "profitMargins", "operatingMargins",
+                "debtToEquity", "currentRatio", "quickRatio"
             ]
             
             filtered_info = {k: info.get(k) for k in relevant_fields if info.get(k) is not None}
+
+            def _extract_from_statement(statement_df, possible_rows):
+                try:
+                    if statement_df is None or statement_df.empty:
+                        return None
+                    for row in possible_rows:
+                        if row in statement_df.index:
+                            row_vals = statement_df.loc[row].dropna()
+                            if not row_vals.empty:
+                                return float(row_vals.iloc[0])
+                    return None
+                except Exception:
+                    return None
+
+            financials = getattr(stock, "financials", None)
+            quarterly_financials = getattr(stock, "quarterly_financials", None)
+            balance_sheet = getattr(stock, "balance_sheet", None)
+            cashflow = getattr(stock, "cashflow", None)
+
+            statement_metrics = {
+                "totalRevenue": _extract_from_statement(
+                    quarterly_financials if quarterly_financials is not None and not quarterly_financials.empty else financials,
+                    ["Total Revenue", "Revenue"]
+                ),
+                "netIncome": _extract_from_statement(
+                    quarterly_financials if quarterly_financials is not None and not quarterly_financials.empty else financials,
+                    ["Net Income", "Net Income Common Stockholders"]
+                ),
+                "operatingIncome": _extract_from_statement(
+                    quarterly_financials if quarterly_financials is not None and not quarterly_financials.empty else financials,
+                    ["Operating Income", "EBIT"]
+                ),
+                "totalAssets": _extract_from_statement(
+                    balance_sheet,
+                    ["Total Assets"]
+                ),
+                "totalDebt": _extract_from_statement(
+                    balance_sheet,
+                    ["Total Debt", "Long Term Debt", "Long Term Debt And Capital Lease Obligation"]
+                ),
+                "operatingCashFlow": _extract_from_statement(
+                    cashflow,
+                    ["Operating Cash Flow", "Cash Flow From Continuing Operating Activities"]
+                ),
+                "freeCashFlow": _extract_from_statement(
+                    cashflow,
+                    ["Free Cash Flow"]
+                ),
+            }
+            for k, v in statement_metrics.items():
+                if v is not None:
+                    filtered_info[k] = v
             
             return {
                 "status": "success",

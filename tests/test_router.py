@@ -18,6 +18,12 @@ def test_classify_intent():
     intent, confidence = classify_intent("Plot NVDA candlestick")
     assert intent == Intent.VISUALIZATION_REQUEST
 
+    intent, confidence = classify_intent("Show me MSFT fundamentals for last 6 months")
+    assert intent == Intent.COMPANY_FUNDAMENTALS
+
+    intent, confidence = classify_intent("Chart MSFT fundamentals")
+    assert intent == Intent.COMPANY_FUNDAMENTALS
+
 
 def test_detect_chart_type():
     """Test chart type detection."""
@@ -50,6 +56,9 @@ def test_route_request():
     result = route_request("Compare NVDA vs TSLA YTD with candlestick")
     assert result["chart_type"] == ChartType.CANDLESTICK
     assert len(result["tickers"]) >= 2
+
+    result = route_request("Show me MSFT fundamentals for last 6 months")
+    assert result["intent"] == Intent.COMPANY_FUNDAMENTALS
 
 
 def test_needs_clarification():

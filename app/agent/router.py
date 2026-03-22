@@ -61,6 +61,23 @@ INTENT_PATTERNS = {
 }
 
 
+def _has_fundamental_keywords(text: str) -> bool:
+    """Check if query explicitly asks for fundamentals."""
+    keywords = [
+        "fundamental", "fundamentals", "valuation", "pe", "p/e",
+        "market cap", "earnings", "revenue", "profit", "dividend",
+        "balance sheet", "income statement", "cash flow", "financials"
+    ]
+    text_lower = text.lower()
+    return any(k in text_lower for k in keywords)
+
+
+def _has_visualization_keywords(text: str) -> bool:
+    """Check if query explicitly asks for visualization."""
+    text_lower = text.lower()
+    return any(k in text_lower for k in ["plot", "chart", "graph", "visualize", "draw"])
+
+
 CHART_TYPE_PATTERNS = {
     ChartType.PRICE_LINE: [r"line.*chart", r"price.*chart", r"close.*price"],
     ChartType.CANDLESTICK: [r"candlestick", r"candle", r"ohlc", r"bar.*chart"],
@@ -96,6 +113,9 @@ def classify_intent(text: str) -> Tuple[Intent, float]:
     
     if not scores or max(scores.values()) == 0:
         return Intent.GENERAL_QA, 0.5
+
+    if _has_fundamental_keywords(text):
+        return Intent.COMPANY_FUNDAMENTALS, 0.95
     
     comparison_keywords = ["compare", "comparison", "versus", "vs", "against"]
     has_comparison = any(kw in text_lower for kw in comparison_keywords)
@@ -106,6 +126,10 @@ def classify_intent(text: str) -> Tuple[Intent, float]:
         comparison_score = scores[Intent.CROSS_TICKER_COMPARISON]
         if comparison_score >= max_score * 0.5:
             return Intent.CROSS_TICKER_COMPARISON, min(comparison_score / 2.0, 1.0)
+
+    if _has_visualization_keywords(text) and scores.get(Intent.COMPANY_FUNDAMENTALS, 0) > 0:
+        # Fundamentals with chart keywords should still be fundamentals unless explicitly compare
+        return Intent.COMPANY_FUNDAMENTALS, 0.85
     
     best_intent = max(scores, key=scores.get)
     confidence = min(max_score / 2.0, 1.0)
@@ -208,7 +232,7 @@ def route_request(text: str) -> dict:
     chart_type = detect_chart_type(text)
     indicators = detect_indicators(text)
     
-    if chart_type and intent not in [Intent.VISUALIZATION_REQUEST, Intent.TECHNICAL_ANALYSIS]:
+    if chart_type and intent not in [Intent.VISUALIZATION_REQUEST, Intent.TECHNICAL_ANALYSIS, Intent.COMPANY_FUNDAMENTALS]:
         intent = Intent.VISUALIZATION_REQUEST
     
     needs_chart = (
