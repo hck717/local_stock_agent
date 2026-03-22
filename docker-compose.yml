@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - OLLAMA_BASE_URL=http://host.docker.internal:11434
+      - OLLAMA_MODEL=deepseek-r1:7b
+      - CACHE_TTL_SECONDS=300
+    volumes:
+      - ./outputs:/app/outputs
+      - ./data:/app/data
+    depends_on:
+      - ollama
+    networks:
+      - stock-agent-network
+
+  streamlit:
+    build: .
+    ports:
+      - "8501:8501"
+    environment:
+      - API_BASE=http://api:8000/api
+    volumes:
+      - ./outputs:/app/outputs
+      - ./data:/app/data
+    depends_on:
+      - api
+    networks:
+      - stock-agent-network
+
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+    networks:
+      - stock-agent-network
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+volumes:
+  ollama-data:
+
+networks:
+  stock-agent-network:
+    driver: bridge
